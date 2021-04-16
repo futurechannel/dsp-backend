@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.renren.modules.sys.dao.SysTestTaskDao">
+	<!-- 查询创意信息和今日数据 -->
+	<select id="getIdeaInfoToday" resultType="io.renren.modules.sys.entity.SysIdeaInfoTodayEntity" statementType="STATEMENT">
+		select info.idea_id idea,info.advert_code advertCode,info.app_code appCode,info.isOpen,
+		info.username,${timeXss} timeXs,xs.today_exposure exposure,xs.today_cost cost,info.idea_cost ideaCost
+		from idea_info info,exposure_xs xs
+		where xs.idea_id = info.idea_id
+	</select>
+
+	<!-- 查询创意15分钟内点击量 -->
+	<select id="getIdeaClick" resultType="int">
+		select count(*) clicknum from ${tablename}
+		where adverter_code = #{advertCode} and app_code = #{appCode}
+		and report_time BETWEEN #{starttime} and #{endtime}
+	</select>
+
+	<!-- 更新创意今日数据 -->
+	<update id="updateTodayData">
+		update exposure_xs set today_cost = #{cost},today_exposure = #{exposure}
+		where idea_id = #{idea}
+	</update>
+
+	<!-- 查询用户余额 -->
+	<select id="getUserBalance" resultType="float">
+		select balance from user_balance where username = #{username}
+	</select>
+
+	<!-- 更新用户余额 -->
+	<update id="updateUserBalance">
+		update user_balance set balance = #{balance} where username = #{username}
+	</update>
+
+	<!-- 更新创意状态 -->
+	<update id="updateIdeaStatus">
+		update idea_info set status = #{status} where idea_id = #{idea}
+	</update>
+
+	<!-- 存储历史曝光量和消费 -->
+	<insert id="insertExposureHistory">
+		INSERT INTO exposure_history (idea_id,create_date,exposure,app_code,advert_code,total_cost)
+		VALUES (#{idea},date_sub(curdate(),interval 1 day),#{exposure},#{appCode},#{advertCode},#{cost})
+	</insert>
+</mapper>

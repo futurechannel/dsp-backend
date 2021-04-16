@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.renren.modules.sys.dao.SysDataAnlysisDao">
+	<!-- 查询创意的历史曝光量和消费 -->
+	<select id="queryExposureWithDate" resultType="io.renren.modules.sys.entity.SysExposureEntity">
+		select id,idea_id idea,date_format(create_date, '%Y-%m-%d') createDate,exposure,total_cost totalCost from exposure_history where idea_id = #{idea_id}
+			and create_date BETWEEN #{starttime} and #{endtime} ORDER BY create_date
+	</select>
+
+	<!-- 查询创意的历史点击量和下载量 -->
+	<select id="queryClickWithDate" resultType="io.renren.modules.sys.entity.SysClickEntity">
+		select id,date_format(biz_date, '%Y-%m-%d') bizDate,adverter_code advertCode,app_code appCode,
+		click_cnt clickCnt,active_cnt activeCnt from report_data_day
+		where adverter_code = #{advert_code} and app_code = #{app_code}
+		and biz_date BETWEEN #{starttime} and #{endtime} ORDER BY biz_date
+	</select>
+
+	<!-- 查询用户下的创意信息 -->
+	<select id="queryIdeaWithUsername" resultType="io.renren.modules.sys.entity.SysIdeaEntity">
+		SELECT idea_id idea,idea_name iname,username,advert_code advertCode,app_code appCode,date_format(create_date, '%Y-%m-%d') createDate
+		from idea_info where username = #{username}
+	</select>
+
+	<!-- 查询数据分析表格数据 -->
+	<select id="queryTableData" resultType="io.renren.modules.sys.entity.SysTableDataEntity">
+		select his.idea_id idea,date_format(his.create_date, '%Y-%m-%d') createDate,his.exposure,
+		his.app_code appCode,his.advert_code advertCode,his.total_cost totalCost,
+		info.idea_name iname from exposure_history his,idea_info info
+ 		where his.idea_id = info.idea_id and info.username = #{username}
+		and his.create_date BETWEEN #{starttime} and #{endtime}
+		order by his.create_date desc
+	</select>
+
+	<!-- 查询用户下所有创意的今日消费 -->
+	<select id="queryUserTodayCost" resultType="float">
+		select IFNULL(a.todayCost,0) cost from
+		( select sum(xs.today_cost) todayCost
+		from idea_info info,exposure_xs xs
+		where xs.idea_id = info.idea_id and info.username = #{username}) a
+	</select>
+</mapper>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.renren.modules.sys.dao.SysAddIdeaDao">
+	<!--添加创意信息-->
+	<insert id="insertIdea">
+		INSERT INTO idea_info VALUES (#{ideaID},#{ideaName},#{userName},#{ideaCost},now(),#{isOpen},#{status},#{advertCode},#{appCode},#{appId},#{imgUrl},#{type})
+	</insert>
+
+	<select id="queryUsedAdverterCode" resultType="string">
+		SELECT advert_code FROM idea_info WHERE username = #{userName} and app_code=#{appCode}
+	</select>
+
+	<select id="querIdeaByIdeaID" resultType="io.renren.modules.sys.entity.SysIdeaInfoEntity">
+		SELECT * FROM idea_info WHERE idea_id = #{ideaID}
+	</select>
+
+	<select id="updateIdea" resultType="int">
+		UPDATE idea_info set idea_name = #{ideaName},type=#{type},img_url=#{imgUrl},idea_cost=#{ideaCost},app_id=#{appId},advert_code=#{advertCode},status=#{status} WHERE idea_id =#{ideaID}
+	</select>
+
+	<select id="updateIdeaName" resultType="int">
+		UPDATE idea_info set idea_name = #{ideaName} WHERE idea_id =#{ideaID}
+	</select>
+
+	<select id="updateIdeaCost" resultType="int">
+		UPDATE idea_info set idea_cost = #{ideaCost} WHERE idea_id =#{ideaID}
+	</select>
+
+	<select id="updateIdeaPriceAndStatus" resultType="int">
+		UPDATE idea_info set isOpen=#{isOpen},status=#{status} WHERE idea_id =#{ideaID}
+	</select>
+
+	<!--获取用户时间段内的创意数据（不包括今天）-->
+	<select id="getUserIdeaTimeInfo" resultType="io.renren.modules.sys.entity.SysIdeaInfoEntity">
+		select a.*,b.totalExp,b.totalCost from
+		(select idea_id ideaID,idea_name ideaName,idea_cost ideaCost,create_date createDate,
+		`status` ,isOpen,advert_code advertCode,app_code appCode
+		from idea_info info where username = #{username}) a,
+		(select SUM(exposure) totalExp,SUM(total_cost) totalCost,idea_id ideaID
+		from exposure_history where create_date BETWEEN #{starttime} and #{endtime}
+		GROUP BY idea_id) b
+		where a.ideaID = b.ideaID and a.ideaName like #{searchIName}
+	</select>
+
+	<!--创意分解1-->
+	<select id="getUserIdeaTimeInfo1" resultType="io.renren.modules.sys.entity.SysIdeaInfoEntity">
+		select idea_id ideaID,idea_name ideaName,idea_cost ideaCost,create_date createDate,
+		`status` ,isOpen,advert_code advertCode,app_code appCode,app_id appId
+		from idea_info info where username = #{username}
+		and idea_name like #{searchIName}
+	</select>
+
+	<!--创意分解2-->
+	<select id="getUserIdeaTimeInfo2" resultType="io.renren.modules.sys.entity.SysIdeaInfoEntity">
+		select IFNULL(SUM(exposure),0) totalExp,IFNULL(SUM(total_cost),0) totalCost,idea_id ideaID
+		from exposure_history where create_date BETWEEN #{starttime} and #{endtime}
+		and idea_id = #{ideaID}
+	</select>
+
+	<!--获取今天某创意的下载量-->
+	<select id="getIdeaTodayDownload" resultType="int">
+		select count(*) todayDown from callback_log
+		where adverter_code = #{advertCode} and app_code = #{appCode}
+		and create_time BETWEEN #{starttime} and #{endtime}
+	</select>
+
+	<!--获取今天某创意的曝光与消费-->
+	<select id="getIdeaTodayExpAndCost" resultType="io.renren.modules.sys.entity.SysIdeaInfoTodayEntity">
+		SELECT IFNULL((SELECT today_exposure FROM exposure_xs WHERE idea_id=#{idea}),0) exposure,
+		IFNULL((SELECT today_cost FROM exposure_xs WHERE idea_id=#{idea}),0) cost
+	</select>
+
+	<!--获取某用户的创意数量-->
+	<select id="getIdeaNumWithUsername" resultType="int">
+		select count(*) ideaNum from idea_info where username = #{username}
+	</select>
+
+	<!-- 曝光系数表插入创意信息 -->
+	<insert id="inserIdeaInfoToXs">
+		insert into exposure_xs(idea_id,app_code,advert_code) values (#{ideaId},#{appCode},#{advertCode})
+	</insert>
+</mapper>

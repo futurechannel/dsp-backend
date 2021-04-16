@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="io.renren.modules.sys.dao.SysUserMoneyDao">
+	<!-- 查询用户的充值记录 -->
+	<select id="queryMoneyLogByUsername" resultType="io.renren.modules.sys.entity.SysUserMoneyEntity">
+		select * from user_money where username = #{username} order by saveDate desc
+	</select>
+
+	<!-- 注册 -->
+	<insert id="insertUser">
+		insert into sys_user (username,password,create_time,salt,status,email,pwd)
+		values (#{username},#{password},#{createTime},#{salt},0,#{email},#{pwd})
+	</insert>
+
+	<!-- 余额表插入用户信息 -->
+	<insert id="insertUserToBalance">
+		insert into user_balance values (#{username},#{balance})
+	</insert>
+</mapper>
